@@ -11,7 +11,7 @@ const ChatGPT = () => {
 
     setLoading(true);
     try {
-      const res = await axios.post("http://localhost:5001/api/ChatGPT", { message: input });
+      const res = await axios.post("https://notifyback.onrender.com/api/ChatGPT", { message: input });
 
       console.log("🟢 Response from Backend:", res.data);
 

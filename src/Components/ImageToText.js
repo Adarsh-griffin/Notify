@@ -12,6 +12,10 @@ const ImageToText = () => {
   const [progress, setProgress] = useState(0);
   const videoRef = useRef(null);
   const [showCamera, setShowCamera] = useState(false);
+  // const OCR_API_KEY = process.env.REACT_APP_OCR_API_KEY;
+  // const HUGGINGFACE_API_KEY = process.env.REACT_APP_HUGGINGFACE_API_KEY;
+
+
 
   const handleImageUpload = (event) => {
     const uploaded = event.target.files[0];
@@ -46,7 +50,7 @@ const ImageToText = () => {
     canvas.width = videoRef.current.videoWidth;
     canvas.height = videoRef.current.videoHeight;
     canvas.getContext('2d').drawImage(videoRef.current, 0, 0);
-    
+
     canvas.toBlob((blob) => {
       setFile(blob);
       setImagePreview(URL.createObjectURL(blob));
@@ -63,20 +67,14 @@ const ImageToText = () => {
     setProgress(0);
 
     try {
-      // Using OCR.space API
       const formData = new FormData();
-      formData.append('file', file);
-      formData.append('language', 'eng');
-      formData.append('isOverlayRequired', 'false');
-      formData.append('OCREngine', '2'); // Engine 2 is more accurate
+      formData.append('image', file);
 
       const response = await axios.post(
-        'https://api.ocr.space/parse/image',
+        'http://localhost:5001/api/ocr/image-to-text',
         formData,
         {
           headers: {
-            'apikey': import.meta.env.VITE_OCR_API_KEY,
-
             'Content-Type': 'multipart/form-data'
           },
           onUploadProgress: (progressEvent) => {
@@ -100,28 +98,42 @@ const ImageToText = () => {
   };
 
   const enhanceText = async () => {
-    if (!text) return alert("No text to enhance!");
-    setAiLoading(true);
-    try {
-      // Using a generic AI API endpoint (you can replace with your preferred service)
-      const response = await axios.post(
-        "https://api-inference.huggingface.co/models/facebook/bart-large-cnn",
-        { inputs: text },
-        {
-          headers: {
-            "Authorization": `Bearer ${import.meta.env.VITE_HUGGINGFACE_API_KEY}`
-, // Replace with your key
-          },
-        }
-      );
-      
-      setEnhancedText(response.data[0].summary_text || "No enhancement available");
-    } catch (error) {
-      console.error(error);
-      // Fallback to simple text processing if API fails
-      setEnhancedText(text.replace(/\s+/g, ' ').replace(/(\r\n|\n|\r)/gm, " ").trim());
+    if (!text || text.trim().length < 10) {
+      alert("Please extract some text first (at least 10 characters)");
+      return;
     }
-    setAiLoading(false);
+  
+    setAiLoading(true);
+    setEnhancedText("Enhancing text... (may take 10-20 seconds)");
+  
+    try {
+      const response = await axios.post(
+        "http://localhost:5001/api/ai/enhance-text", 
+        { text: text.trim() },
+        { timeout: 30000 } // 30 second timeout
+      );
+  
+      if (response.data.success) {
+        setEnhancedText(response.data.enhancedText);
+        console.log(`Used model: ${response.data.modelUsed || 'fallback'}`);
+      } else {
+        setEnhancedText(response.data.enhancedText);
+        alert("AI enhancement unavailable. Used basic formatting.");
+      }
+    } catch (error) {
+      console.error("Enhancement error:", error);
+      
+      // Fallback to simple cleaning
+      const cleaned = text
+        .replace(/\n\s*\n/g, '\n\n')
+        .replace(/\s+/g, ' ')
+        .trim();
+      
+      setEnhancedText(cleaned);
+      alert("Text enhancement service is currently unavailable. Used basic formatting.");
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const copyToClipboard = () => {
@@ -139,12 +151,11 @@ const ImageToText = () => {
 
   return (
     <div
-      className={`relative p-4 bg-gray-100 rounded-lg shadow-md flex flex-col space-y-4 ${
-        fullscreen ? "fixed inset-0 z-50 bg-white overflow-auto" : "max-w-xl mx-auto"
-      } transition-all duration-300`}
+      className={`relative p-4 bg-gray-300 rounded-lg  flex flex-col space-y-4 ${fullscreen ? "fixed inset-0 z-50 bg-gray-300 overflow-auto" : "max-w-xl mx-auto"
+        } transition-all duration-300`}
     >
       {/* Fullscreen Toggle Button */}
-      {!fullscreen && (
+      {/* {!fullscreen && (
         <button
           onClick={toggleFullscreen}
           className="absolute top-2 right-2 text-xl p-2 rounded-full hover:bg-gray-200"
@@ -152,10 +163,10 @@ const ImageToText = () => {
         >
           ⛶
         </button>
-      )}
+      )} */}
 
       {/* Close Fullscreen Button */}
-      {fullscreen && (
+      {/* {fullscreen && (
         <button
           onClick={toggleFullscreen}
           className="absolute top-2 right-2 text-xl p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
@@ -163,7 +174,7 @@ const ImageToText = () => {
         >
           ✕
         </button>
-      )}
+      )} */}
 
       <div className="flex items-center space-x-2">
         <label className="flex-1 relative">
@@ -174,11 +185,11 @@ const ImageToText = () => {
             onChange={handleImageUpload}
             capture="environment"
           />
-          <div className="p-2 bg-blue-500 text-white rounded-md text-center cursor-pointer hover:bg-blue-600">
+          <div className="p-2 bg-blue-600 text-white rounded-md text-center cursor-pointer hover:bg-blue-700">
             Choose File
           </div>
         </label>
-        
+
         {navigator.mediaDevices && navigator.mediaDevices.getUserMedia && (
           <button
             onClick={showCamera ? stopCamera : startCamera}
@@ -228,11 +239,20 @@ const ImageToText = () => {
       />
 
       <button
-        className="p-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-60"
         onClick={enhanceText}
-        disabled={aiLoading}
+        disabled={aiLoading || !text}
+        className={`p-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-all
+    ${aiLoading ? 'opacity-75 cursor-not-allowed' : ''}
+    ${!text ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
-        {aiLoading ? "Enhancing..." : "Enhance Text"}
+        {aiLoading ? (
+          <span className="flex items-center">
+            <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+              {/* Spinner icon */}
+            </svg>
+            Enhancing...
+          </span>
+        ) : "Enhance Text"}
       </button>
 
       <textarea

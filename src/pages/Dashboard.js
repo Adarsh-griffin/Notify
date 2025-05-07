@@ -629,7 +629,7 @@ function Dashboard() {
               <span>Archive</span>
             </a>
           </nav>
-          <div className="mt-auto pb-10">
+          <div className="mt-auto pb-10 overflow-auto">
             <ImageToText darkMode={darkMode} />
             <button
               onClick={() => setDarkMode(!darkMode)}
