@@ -71,7 +71,7 @@ const ImageToText = () => {
       formData.append('image', file);
 
       const response = await axios.post(
-        'http://localhost:5001/api/ocr/image-to-text',
+        'https://notifyback.onrender.com/api/ocr/image-to-text',
         formData,
         {
           headers: {
@@ -108,7 +108,7 @@ const ImageToText = () => {
   
     try {
       const response = await axios.post(
-        "http://localhost:5001/api/ai/enhance-text", 
+        "https://notifyback.onrender.com/api/ai/enhance-text", 
         { text: text.trim() },
         { timeout: 30000 } // 30 second timeout
       );
