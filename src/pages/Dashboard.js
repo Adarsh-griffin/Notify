@@ -100,7 +100,7 @@ function Dashboard() {
   const fetchNotes = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:5001/api/notes/all", {
+      const response = await axios.get("https://notifyback.onrender.com/api/notes/all", {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -118,7 +118,7 @@ function Dashboard() {
   const fetchArchivedNotes = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:5001/api/notes/archived", {
+      const response = await axios.get("https://notifyback.onrender.com/api/notes/archived", {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -317,7 +317,7 @@ function Dashboard() {
     try {
       const token = localStorage.getItem("token");
 
-      await axios.delete(`http://localhost:5001/api/notes/${id}`, {
+      await axios.delete(`https://notifyback.onrender.com/api/notes/${id}`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
@@ -355,7 +355,7 @@ function Dashboard() {
       setIsArchiving(true);
       const token = localStorage.getItem("token");
       const response = await axios.put(
-        `http://localhost:5001/api/notes/${id}/unarchive`, {},
+        `https://notifyback.onrender.com/api/notes/${id}/unarchive`, {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -429,7 +429,7 @@ function Dashboard() {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(`http://localhost:5001/api/notes/search`, {
+      const response = await axios.get(`https://notifyback.onrender.com/api/notes/search`, {
         params: { query },
         headers: {
           Authorization: `Bearer ${token}`,
