@@ -284,7 +284,7 @@ function Dashboard() {
       const color = colors[Math.floor(Math.random() * colors.length)];
 
       const response = await axios.post(
-        "http://localhost:5001/api/notes",
+        "https://notifyback.onrender.com/api/notes",
         { title, content, color },
         {
           headers: {
@@ -335,7 +335,7 @@ function Dashboard() {
       setIsArchiving(true);
       const token = localStorage.getItem("token");
       const response = await axios.put(
-        `http://localhost:5001/api/notes/${id}/archive`, {},
+        `https://notifyback.onrender.com/api/notes/${id}/archive`, {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
